@@ -11,7 +11,9 @@ API: https://hwannd65mid.pythonanywhere.com/api_root/
 Android에 표시된 비트맵과 클라우드 최신 이미지의 동일성 테스트 통과.
 
 아이폰 전송 실행 (YOLOv5 폴더의 가상환경에서):
-python detect.py --weights yolov5s.pt --source 1 --device cpu --upload --nosave --classes 0 --conf-thres 0.6 --absence-seconds 2 --server-url https://hwannd65mid.pythonanywhere.com
+python detect.py --weights yolov5s.pt --source 1 --device cpu --upload --nosave --classes 0 --conf-thres 0.6 --server-url https://hwannd65mid.pythonanywhere.com
+기본값은 강의자료의 프레임 단위 0→1 변화 감지다.
+추가 편의 기능인 중복 전송 방지를 켜려면 위 명령에 --absence-seconds 2를 추가한다.
 
 클라우드용 Android 빌드 (PhotoViewer 폴더):
 ./gradlew assembleDebug -PphotoBlogUrl=https://hwannd65mid.pythonanywhere.com
