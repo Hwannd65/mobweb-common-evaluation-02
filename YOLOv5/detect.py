@@ -46,7 +46,7 @@ ROOT = Path(os.path.relpath(ROOT, Path.cwd()))  # relative
 
 from ultralytics.utils.plotting import Annotator, colors, save_one_box
 
-from changedetection import ChangeDetection
+from changedetection import ChangeDetection, StablePresence
 from models.common import DetectMultiBackend
 from utils.dataloaders import IMG_FORMATS, VID_FORMATS, LoadImages, LoadScreenshots, LoadStreams
 from utils.general import (
@@ -100,7 +100,7 @@ def run(
     vid_stride=1,  # video frame-rate stride
     upload=False,  # upload newly appearing classes to Django
     server_url="http://127.0.0.1:8000",  # local or PythonAnywhere server
-    absence_seconds=2.0,  # continuous absence needed before a class can reappear
+    absence_seconds=0.0,  # 0 follows Ch08; positive values enable the optional presence filter
 ):
     """Runs YOLOv5 detection inference on various sources like images, videos, directories, streams, etc.
 
@@ -176,7 +176,8 @@ def run(
     model = DetectMultiBackend(weights, device=device, dnn=dnn, data=data, fp16=half)
     stride, names, pt = model.stride, model.names, model.pt
     imgsz = check_img_size(imgsz, s=stride)  # check image size
-    cd = ChangeDetection(names, server_url, absence_seconds) if upload else None
+    presence_filter = StablePresence(len(names), absence_seconds) if upload and absence_seconds != 0 else None
+    cd = ChangeDetection(names, server_url) if upload else None
 
     # Dataloader
     bs = 1  # batch_size
@@ -248,7 +249,7 @@ def run(
             gn = torch.tensor(im0.shape)[[1, 0, 1, 0]]  # normalization gain whwh
             imc = im0.copy() if save_crop else im0  # for save_crop
             annotator = Annotator(im0, line_width=line_thickness, example=str(names))
-            detected = [0] * len(names)  # presence of each class in this frame
+            detected = [0 for i in range(len(names))]  # Ch08 page 11
             if len(det):
                 # Rescale boxes from img_size to im0 size
                 det[:, :4] = scale_boxes(im.shape[2:], det[:, :4], im0.shape).round()
@@ -290,7 +291,9 @@ def run(
             # Stream results
             im0 = annotator.result()
             if cd is not None:
-                cd.add(detected, save_dir, im0, source=str(p))
+                if presence_filter is not None:
+                    detected = presence_filter.update(detected)
+                cd.add(names, detected, save_dir, im0)  # Ch08 page 11
             if view_img:
                 if platform.system() == "Linux" and p not in windows:
                     windows.append(p)
@@ -414,8 +417,8 @@ def parse_opt():
     parser.add_argument("--upload", action="store_true", help="send newly appearing classes and images to Django")
     parser.add_argument("--server-url", default="http://127.0.0.1:8000", help="Django server URL for --upload")
     parser.add_argument(
-        "--absence-seconds", type=float, default=2.0,
-        help="continuous absence before reappearance triggers an upload; 0 uses the original frame-by-frame rule",
+        "--absence-seconds", type=float, default=0.0,
+        help="optional presence filter; default 0 follows Ch08, e.g. 2 suppresses brief missed detections",
     )
     opt = parser.parse_args()
     opt.imgsz *= 2 if len(opt.imgsz) == 1 else 1  # expand

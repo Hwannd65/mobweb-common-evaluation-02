@@ -19,7 +19,6 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import java.io.File;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -44,7 +43,8 @@ public class IntruderImageSyncTest {
             api.disconnect();
         }
         assertTrue("Create a YOLO detection before running this test",
-                latest.getString("text").startsWith("Newly detected:"));
+                !latest.getString("title").isEmpty()
+                        && latest.getString("text").contains(latest.getString("title")));
         Bitmap expected;
         try (java.io.InputStream input = new URL(latest.getString("image")).openStream()) {
             expected = BitmapFactory.decodeStream(input);
@@ -65,10 +65,6 @@ public class IntruderImageSyncTest {
                 Bitmap actual = ((BitmapDrawable) first.imageView.getDrawable()).getBitmap();
                 assertTrue("The displayed bitmap must equal the newest YOLO image", expected.sameAs(actual));
             });
-            File evidence = new File(InstrumentationRegistry.getInstrumentation()
-                    .getTargetContext().getFilesDir(), "evaluation02-evidence");
-            assertTrue(evidence.isDirectory() || evidence.mkdirs());
-            assertTrue(device.takeScreenshot(new File(evidence, "07_android_yolo.png")));
         }
     }
 }

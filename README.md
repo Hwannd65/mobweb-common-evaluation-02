@@ -46,6 +46,10 @@ python manage.py runserver 127.0.0.1:8000
 
 YOLOv5 원본은 [Ultralytics YOLOv5](https://github.com/ultralytics/yolov5)의 커밋 `0a85386d269bf8b49873a24591491c1a4b7024a8`을 기반으로 한다. 원본의 라이선스와 출처를 `YOLOv5/`에 유지했다. 핵심 추가 코드는 `changedetection.py`와 `detect.py`의 전송 연결 부분이다.
 
+`ChangeDetection`은 강의자료 8~10쪽의 `__init__`, `add`, `send` 구조와 변수 이름을 따른다. `add`는 이전 프레임의 0과 현재 프레임의 1을 비교하고, 새로 나타난 종류가 있으면 한 번 전송한다. 여러 종류가 새로 나타나면 강의자료처럼 제목은 마지막 종류, 본문은 새 종류 전체가 된다. `detect.py`는 11쪽의 검출 배열 생성·종류 표시·`cd.add(names, detected, save_dir, im0)` 호출을 연결한다.
+
+실행 환경에 맞춘 차이는 다음과 같다. 서버의 인증 방식에 맞춰 `JWT` 대신 `Token`을 사용하고, 실제 계정은 실행할 때 입력하며 토큰을 출력하지 않는다. 이미지 경로는 `pathlib.Path`로 만들고 OpenCV에는 문자열 경로를 전달한다. 서버 주소 선택, 요청 시간 제한, 파일 닫기 및 성공·실패 확인도 포함한다. 날짜 필드는 강의자료처럼 전송하지만 현재 서버에서는 서버 시각으로 생성한다.
+
 ```bash
 cd YOLOv5
 python3 -m venv .venv
@@ -64,22 +68,22 @@ python detect.py --weights yolov5s.pt --source 1 --device cpu
 로컬 서버로 전송할 때는 아래 명령을 사용한다. Django 서버는 별도 터미널에서 실행해야 한다. 사용자명과 비밀번호는 실행 후 입력하고, 코드에 저장하지 않는다.
 
 ```bash
-python detect.py --weights yolov5s.pt --source 1 --device cpu --upload --nosave --classes 0 --conf-thres 0.6 --absence-seconds 2
+python detect.py --weights yolov5s.pt --source 1 --device cpu --upload --nosave --classes 0 --conf-thres 0.6
 ```
 
 클라우드로 전송할 때는 다음을 사용한다. 로컬과 클라우드는 계정과 DB가 별도다.
 
 ```bash
-python detect.py --weights yolov5s.pt --source 1 --device cpu --upload --nosave --classes 0 --conf-thres 0.6 --absence-seconds 2 --server-url https://hwannd65mid.pythonanywhere.com
+python detect.py --weights yolov5s.pt --source 1 --device cpu --upload --nosave --classes 0 --conf-thres 0.6 --server-url https://hwannd65mid.pythonanywhere.com
 ```
 
 `Django post created: id=...`가 나오면 게시물 생성에 성공한 것이다. `--classes 0`은 사람만 검출하는 이번 실습 설정이며, 객체 종류 필터를 제거하면 다른 종류도 처리한다. `--nosave`는 기본 검출 동영상 저장을 생략하며, 전송용 JPEG는 `runs/detect/exp*/detected/날짜/`에 남긴다. 영상 창에서 Q를 눌러 종료한다.
 
 ## 추가 편의 기능 1개
 
-**짧은 미검출에 따른 중복 게시물 방지.** 사람이 잠깐 검출되지 않아도 즉시 퇴장으로 처리하지 않는다. 기본 2초 연속 미검출이 확인된 뒤 다시 나타날 때 한 번 더 전송한다. 이 값은 실습 안정화를 위해 추가한 설정으로, 교수님이 지정한 고정값은 아니다. `--absence-seconds 0`은 프레임 단위 변화 방식이다.
+**짧은 미검출에 따른 중복 게시물 방지.** 기본값은 `--absence-seconds 0`이며 강의자료의 프레임 단위 변화 방식을 그대로 사용한다. 편의 기능을 켜려면 위 전송 명령 뒤에 `--absence-seconds 2`를 추가한다. 그러면 별도 `StablePresence`가 2초 미만의 미검출을 보정한 뒤 기본 `ChangeDetection.add`에 검출 배열을 넘긴다. 2초 연속 미검출 후 다시 나타나면 한 번 더 전송한다. 2초는 교수님이 지정한 값이 아니다.
 
-실제 카메라에서 정지 상태의 추가 전송이 멈추고, 화면을 나갔다 돌아왔을 때 한 장 더 등록됨을 확인했다. 통신 실패 시 이미지를 로컬에 남기고 검출을 계속한다. 같은 등장 상태에서 자동 재전송하지 않으므로 실패 로그가 나오면 연결을 확인한 뒤 다시 등장시키거나 실행을 다시 시작한다.
+이 보정 규칙은 앞선 실제 카메라 테스트에서 정지 상태의 추가 전송이 멈추고, 화면을 나갔다 돌아왔을 때 한 장 더 등록됨을 확인한 규칙이다. 분리한 현재 코드에서도 자동 테스트로 검증했다. 통신 실패 시 오류를 표시하고 실행이 중단되며, 먼저 저장한 이미지는 로컬에 남는다. 서버 연결을 확인한 뒤 다시 실행한다.
 
 01에서 가져온 기존 기능은 유지했으며, 02의 추가 편의 기능으로 중복 계산하지 않았다.
 
