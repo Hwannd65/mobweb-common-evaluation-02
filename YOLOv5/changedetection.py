@@ -87,7 +87,7 @@ class StablePresence:
             raise ValueError("absence_seconds must be a finite, non-negative number")
         self.absence_seconds = absence_seconds
         self.previous = [0] * count
-        self.missing_since = [None] * count
+        self.missing_since: list[float | None] = [None] * count
 
     def update(self, detected_current):
         current = detected_current[:]
@@ -96,9 +96,11 @@ class StablePresence:
             if detected:
                 self.missing_since[i] = None
             elif self.previous[i]:
-                if self.missing_since[i] is None:
-                    self.missing_since[i] = now
-                if now - self.missing_since[i] < self.absence_seconds:
+                missing_since = self.missing_since[i]
+                if missing_since is None:
+                    missing_since = now
+                    self.missing_since[i] = missing_since
+                if now - missing_since < self.absence_seconds:
                     current[i] = 1
         self.previous = current
         return current
