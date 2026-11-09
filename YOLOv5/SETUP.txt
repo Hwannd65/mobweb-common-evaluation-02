@@ -1,0 +1,51 @@
+YOLOv5 공통평가 02 실행 환경
+
+공식 소스: https://github.com/ultralytics/yolov5
+기준 커밋: 0a85386d269bf8b49873a24591491c1a4b7024a8
+Python: 3.13.16 (macOS arm64)
+설치 버전 목록: requirements.lock.txt
+기본 detect.py 실행·캡처 후, Ch08 변화 감지와 Django 전송 기능을 추가함.
+변경 파일: detect.py, changedetection.py, tests/test_changedetection.py
+모델: https://github.com/ultralytics/yolov5/releases/download/v7.0/yolov5s.pt
+모델 SHA256: 8b3b748c1e592ddd8868022e8732fde20025197328490623cc16c6f24d0782ee
+
+전용 가상환경: YOLOv5/.venv (Django 환경과 별개)
+실행 준비 (터미널):
+cd /Users/hwannd/khu/class/mobweb/project/common-evaluation-02/YOLOv5
+source .venv/bin/activate
+export YOLO_CONFIG_DIR="$VIRTUAL_ENV/.config/ultralytics"
+export MPLCONFIGDIR="$VIRTUAL_ENV/.cache/matplotlib"
+export XDG_CACHE_HOME="$VIRTUAL_ENV/.cache"
+
+예제 사진 검증 (완료):
+python detect.py --weights yolov5s.pt --source data/images --device cpu --save-txt --save-conf --project runs/detect --name setup-check --exist-ok
+결과: bus.jpg 사람 4명과 버스 1대, zidane.jpg 사람 2명과 넥타이 2개.
+저장 위치: runs/detect/setup-check/
+
+웹캠 실행 (아이폰 카메라 1번으로 확인 완료):
+python detect.py --weights yolov5s.pt --source 1 --device cpu
+종료: 영상 창을 선택하고 q 키.
+카메라 권한 또는 카메라 번호 문제는 실제 실행 시 확인.
+기본 detect.py 실행 화면을 캡처한 뒤 서버 연동 코드를 추가할 것.
+
+환경 재설치가 필요할 때:
+python -m pip install -r requirements.lock.txt
+
+Git 제출 준비:
+이 YOLOv5 폴더는 02 저장소에 일반 디렉터리로 포함할 수 있도록 원격 소스의 .git 메타데이터를 분리했다.
+원본 LICENSE와 출처는 보존했다. 02의 GitHub 저장소는 아직 만들지 않았다.
+가상환경(.venv), 모델(*.pt), 실행 결과(runs)는 공식 .gitignore 규칙상 제외된다.
+공통평가 01 코드, 기존 02 서버·앱·보고서는 수정하지 않았다.
+서버 자동 전송 (Django 서버를 별도 탭에서 먼저 실행):
+python detect.py --weights yolov5s.pt --source 1 --device cpu --upload --nosave
+실행 중 Django 아이디·비밀번호 입력. 비밀번호와 토큰은 파일에 저장하거나 출력하지 않는다.
+--nosave는 전체 영상 저장만 끈다. 전송할 검출 이미지는 runs/detect/실행폴더/detected/날짜/ 아래에 저장된다.
+객체 종류별 이전 0 → 현재 1일 때만 전송한다. 객체가 사라졌다 다시 나타나면 재전송한다.
+기본값은 2초 연속 미검출일 때만 사라짐으로 판정한다. 짧은 누락 후 재검출은 재전송하지 않는다.
+이는 실시간 검출 흔들림을 줄이는 보완 조건이며 교수님이 지정한 시간값은 아니다.
+--absence-seconds 0 옵션은 강의 예제의 프레임별 0 → 1 판정으로 돌아간다.
+실제 누락이 2초 이상이면 다시 전송될 수 있으며, 사람 개별 추적은 하지 않는다.
+전송 실패 시 로컬 이미지는 유지하며 검출을 계속한다. 같은 상태에서 자동 재전송하지 않는다.
+다른 서버는 --server-url https://실제주소 옵션으로 지정. 현재 서버는 Token 인증을 사용한다.
+자동 실행이 필요한 경우 YOLO_USERNAME·YOLO_PASSWORD 환경변수를 입력 대신 사용할 수 있다.
+인증 정보를 Git에 올리거나 실행 화면·보고서에 포함하지 않는다.
