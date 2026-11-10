@@ -173,6 +173,7 @@ public class MainActivity extends AppCompatActivity {
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         imageAdapter = new ImageAdapter(this::onRecommendationClick, this::onCommentsClick);
         recyclerView.setAdapter(imageAdapter);
+        updateReviewAccount();
         syncButton.setOnClickListener(this::onClickDownload);
         uploadButton.setOnClickListener(this::onClickUpload);
     }
@@ -182,12 +183,23 @@ public class MainActivity extends AppCompatActivity {
         String username = photoBlogClient.getCurrentUsername();
         if (!displayedUsername.equals(username)) {
             displayedUsername = username;
-            if (imageAdapter != null) imageAdapter.clearPersonalization();
+            if (imageAdapter != null) {
+                imageAdapter.clearPersonalization();
+                updateReviewAccount();
+            }
         }
         accountStatus.setText(signedIn
                 ? getString(R.string.account_signed_in, photoBlogClient.getCurrentUsername())
                 : getString(R.string.account_guest));
         accountButton.setText(signedIn ? R.string.logout : R.string.login);
+    }
+
+    private void updateReviewAccount() {
+        String scope = BuildConfig.PHOTO_BLOG_URL + "|" + photoBlogClient.getCurrentUsername();
+        imageAdapter.setReviewPreferences(
+                getSharedPreferences("photo_reviews_" + android.net.Uri.encode(scope), MODE_PRIVATE),
+                () -> ((TextView) findViewById(R.id.unread_photo_count)).setText(
+                        getString(R.string.unread_photo_count, imageAdapter.unreadPhotoCount())));
     }
 
     private void showLogin() { showLogin(""); }

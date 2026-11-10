@@ -86,6 +86,13 @@
             android:text="@string/sync_hint"
             android:textSize="14sp" />
 
+        <TextView
+            android:id="@+id/unread_photo_count"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:paddingStart="16dp" android:paddingEnd="16dp"
+            android:accessibilityLiveRegion="polite"
+            android:text="@string/review_sync_hint" android:textSize="14sp" />
+
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recyclerView"
             android:layout_width="match_parent"

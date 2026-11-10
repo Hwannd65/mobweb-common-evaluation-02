@@ -103,4 +103,8 @@
     <string-array name="sort_orders">
         <item>최신순</item><item>오래된순</item><item>추천순</item><item>댓글순</item>
     </string-array>
+    <string name="mark_photo_reviewed">미확인 · 확인 완료</string>
+    <string name="photo_reviewed">확인함</string>
+    <string name="unread_photo_count">현재 목록의 미확인 사진 %1$d장</string>
+    <string name="review_sync_hint">동기화하면 미확인 사진 수가 표시됩니다</string>
 </resources>

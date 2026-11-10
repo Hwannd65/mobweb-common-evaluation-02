@@ -1,5 +1,6 @@
 package com.example.photoviewer;
 
+import android.content.SharedPreferences;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,6 +19,27 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ImageViewHol
     private final RecommendationClick listener;
     private final CommentsClick commentsListener;
     private boolean busy;
+    private SharedPreferences reviewPreferences;
+    private Runnable reviewChanged = () -> {};
+
+    public void setReviewPreferences(SharedPreferences preferences, Runnable changed) {
+        reviewPreferences = preferences;
+        reviewChanged = changed;
+        notifyDataSetChanged();
+        reviewChanged.run();
+    }
+
+    public int unreadPhotoCount() {
+        int count = 0;
+        for (PhotoPost post : posts) {
+            if (post.image != null && !isReviewed(post.id)) count++;
+        }
+        return count;
+    }
+
+    private boolean isReviewed(int id) {
+        return reviewPreferences != null && reviewPreferences.getBoolean("post_" + id, false);
+    }
 
     public ImageAdapter(RecommendationClick listener, CommentsClick commentsListener) {
         this.listener = listener;
@@ -26,6 +48,7 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ImageViewHol
     public void submitPosts(List<PhotoPost> values) {
         posts.clear();
         posts.addAll(values);
+        reviewChanged.run();
         notifyDataSetChanged();
     }
     public void setBusy(boolean value) {
@@ -56,6 +79,15 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ImageViewHol
     @Override public void onBindViewHolder(@NonNull ImageViewHolder holder, int position) {
         PhotoPost post = posts.get(position);
         holder.title.setText(post.title);
+        boolean reviewed = isReviewed(post.id);
+        holder.reviewButton.setVisibility(post.image == null ? View.GONE : View.VISIBLE);
+        holder.reviewButton.setText(reviewed ? R.string.photo_reviewed : R.string.mark_photo_reviewed);
+        holder.reviewButton.setEnabled(!busy && !reviewed && reviewPreferences != null);
+        holder.reviewButton.setOnClickListener(view -> {
+            reviewPreferences.edit().putBoolean("post_" + post.id, true).apply();
+            notifyItemChanged(holder.getBindingAdapterPosition());
+            reviewChanged.run();
+        });
         holder.author.setText(holder.itemView.getContext().getString(R.string.post_by_author, post.author));
         holder.text.setText(post.text);
         holder.imageView.setImageBitmap(post.image);
@@ -84,6 +116,7 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ImageViewHol
         final TextView recommendationCount;
         final Button recommendButton;
         final Button commentsButton;
+        final Button reviewButton;
         public ImageViewHolder(@NonNull View itemView) {
             super(itemView);
             imageView = itemView.findViewById(R.id.imageViewItem);
@@ -94,6 +127,7 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ImageViewHol
             recommendationCount = itemView.findViewById(R.id.recommendation_count);
             recommendButton = itemView.findViewById(R.id.btn_recommend);
             commentsButton = itemView.findViewById(R.id.btn_comments);
+            reviewButton = itemView.findViewById(R.id.btn_review);
         }
     }
 }
