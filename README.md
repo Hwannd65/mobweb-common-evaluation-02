@@ -8,7 +8,6 @@ YOLOv5가 새로 검출한 객체의 이미지와 게시물을 Django 서버에 
 PhotoBlogServer/   Django 서버 및 REST API
 PhotoViewer/       Android 클라이언트 (PhotoViewer 02)
 YOLOv5/            YOLOv5 및 검출 변화 전송 코드
-captures/          보고서에 포함한 실제 실행 캡처 원본
 deployment/        PythonAnywhere 설정 및 배포 기록
 공통평가 02 수행 결과 보고서.docx
 ```
@@ -61,7 +60,7 @@ export XDG_CACHE_HOME="$VIRTUAL_ENV/.cache"
 python detect.py --weights yolov5s.pt --source 1 --device cpu
 ```
 
-`yolov5s.pt`는 Git에 포함하지 않는다. 없으면 YOLOv5가 공식 릴리스에서 내려받는다. 위 명령은 전송 기능을 켜지 않는 기본 검출 실행이다. 수정 전 기본 실행 증빙은 `captures/03_default_command.png`와 `03_default_detection.png`에 보존했다.
+`yolov5s.pt`는 Git에 포함하지 않는다. 없으면 YOLOv5가 공식 릴리스에서 내려받는다. 위 명령은 전송 기능을 켜지 않는 기본 검출 실행이다. 수정 전 기본 실행 명령과 검출 화면은 보고서 3번 관련증빙에서 확인할 수 있다.
 
 이 Mac에서 아이폰 연속성 카메라는 `--source 1`로 확인했다. 다른 컴퓨터의 카메라 번호는 다를 수 있다. 카메라 권한은 실행에 사용하는 터미널 앱에 허용한다.
 

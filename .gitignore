@@ -20,3 +20,5 @@ deployment/*.zip
 deployment/*backup*/
 YOLOv5/runs/
 YOLOv5/*.pt
+
+/captures/
